@@ -15,5 +15,20 @@
             docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
             docker build -t eduardbatiushchenko/docker-react -f Dockerfile.dev .
         - name: Run tests
-          run:  docker run -e CI=true eduardbatiushchenko/docker-react npm run test -- --coverage
+          run:  docker run -e CI=true eduardbatiushchenko/docker-react npm run test
+
+        - name: Generate deployment package
+          run: zip -r deploy.zip . -x '*.git*'
+
+        - name: Deploy to EB
+          uses: einaregilsson/beanstalk-deploy@v18
+          with:
+              aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+              aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+              application_name: docker-practise
+              environment_name: Docker-practise-env
+              existing_bucket_name: elasticbeanstalk-us-east-1-790797343470
+              region: us-east-1
+              version_label: ${{ github.sha }}
+              deployment_package: deploy.zip
 
